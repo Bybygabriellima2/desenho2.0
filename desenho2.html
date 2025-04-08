@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explicação Visual: Processamento de Imagem e Reconhecimento de Padrões</title>
+    <style>
+        /* 
+         * Sistema de variáveis CSS para facilitar a manutenção do tema
+         * --bg-primary: cor de fundo principal
+         * --bg-secondary: cor de fundo secundária (para elementos como cartões)
+         * --bg-tertiary: cor de fundo terciária (para elementos internos)
+         * --text-primary: cor de texto principal
+         * --text-secondary: cor de texto secundária (para textos menos importantes)
+         * --accent-primary: cor de destaque principal (azul)
+         * --accent-secondary: cor de destaque secundária (roxo)
+         * --success: cor para indicar sucesso (verde)
+         * --warning: cor para indicar atenção (amarelo)
+         * --danger: cor para indicar perigo/erro (vermelho)
+         * --transition: transição padrão para animações
+         */
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #252525;
+            --text-primary: #f5f5f5;
+            --text-secondary: #b3b3b3;
+            --accent-primary: #2563eb;
+            --accent-secondary: #8b5cf6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --transition: all 0.3s ease;
+        }
+        
+        /* Reset CSS básico para normalizar a exibição entre navegadores */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Estilos gerais do corpo da página */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto; /* Centraliza o conteúdo na página */
+        }
+        
+        /* Estilização do cabeçalho principal */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Título principal com gradiente de cores */
+        h1 {
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text; /* Para suporte ao Chrome/Safari */
+            background-clip: text;
+            -webkit-text-fill-color: transparent; /* Faz o texto mostrar o gradiente */
+            margin-bottom: 10px;
+        }
+        
+        /* Subtítulos */
+        h2 {
+            color: var(--accent-primary);
+            margin: 20px 0 10px;
+        }
+        
+        /* Parágrafos de texto */
+        p {
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+        
+        /* Sistema de abas */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden; /* Mantém as bordas redondas */
+        }
+        
+        /* Botões de navegação entre abas */
+        .tab {
+            flex: 1; /* Faz os botões ocuparem espaço igual */
+            padding: 15px;
+            text-align: center;
+            background-color: var(--bg-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            color: var(--text-primary);
+            font-weight: bold;
+        }
+        
+        /* Estilo para a aba ativa */
+        .tab.active {
+            background-color: var(--accent-primary);
+        }
+        
+        /* Estilo para hover nas abas não ativas */
+        .tab:hover:not(.active) {
+            background-color: var(--bg-tertiary);
+        }
+        
+        /* Seções de conteúdo (uma para cada aba) */
+        .section {
+            display: none; /* Oculta todas as seções por padrão */
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease; /* Animação ao exibir uma seção */
+        }
+        
+        /* Exibe a seção ativa */
+        .section.active {
+            display: block;
+        }
+        
+        /* Animação de fade para transição suave entre seções */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Container para a seção de processamento de imagem */
+        .image-processing {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* Container para exibição lado a lado das imagens */
+        .image-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        /* Container para cada canvas de imagem */
+        .canvas-container {
+            background-color: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        /* Estilo dos elementos canvas */
+        canvas {
+            border-radius: 4px;
+            max-width: 100%; /* Responsividade */
+            height: auto;
+        }
+        
+        /* Barra de controles para os botões de efeito */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        /* Estilo dos botões */
+        button {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: bold;
+        }
+        
+        /* Efeito hover nos botões */
+        button:hover {
+            background-color: var(--accent-primary);
+            transform: translateY(-2px); /* Efeito de elevação */
+        }
+        
+        /* Container para diagramas de fluxo */
+        .flow-diagram {
+            background-color: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow-x: auto; /* Permite rolagem horizontal se necessário */
+        }
+        
+        /* Container para a seção de reconhecimento de padrões */
+        .pattern-recognition {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* Grade para o sistema de reconhecimento de padrões */
+        #patternGrid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* 5x5 células */
+            gap: 4px;
+            width: 250px;
+            margin: 0 auto;
+        }
+        
+        /* Célula individual da grade de padrões */
+        .pattern-cell {
+            aspect-ratio: 1; /* Mantém células quadradas */
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        /* Efeito hover nas células */
+        .pattern-cell:hover {
+            background-color: var(--accent-primary);
+            opacity: 0.7;
+        }
+        
+        /* Estilo para célula ativa (selecionada) */
+        .pattern-cell.pattern-active {
+            background-color: var(--accent-primary);
+        }
+        
+        /* Caixa para exibir o resultado da comparação de padrões */
+        .result-box {
+            text-align: center;
+            padding: 15px;
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            min-height: 50px;
+            margin-top: 20px;
+        }
+        
+        /* Texto do resultado de reconhecimento */
+        #patternResult {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        /* Caixa de explicação */
+        .explanation {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-primary); /* Borda visual de destaque */
+        }
+        
+        /* Legenda para códigos de cores */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* Item individual da legenda */
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Caixa de cor da legenda */
+        .color-box {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        /* Estilo para passos no diagrama de fluxo */
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        /* Número do passo no diagrama de fluxo */
+        .step-number {
+            background-color: var(--accent-primary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+        
+        /* Descrição do passo no diagrama de fluxo */
+        .step-description {
+            flex: 1;
+        }
+        
+        /* Responsividade para telas menores */
+        @media (max-width: 768px) {
+            .image-display {
+                flex-direction: column; /* Empilha as imagens em telas pequenas */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cabeçalho principal -->
+    <header>
+        <h1>Visualização Interativa</h1>
+        <p>Entenda visualmente o processamento de imagem e reconhecimento de padrões</p>
+    </header>
+    
+    <!-- Sistema de navegação por abas -->
+    <div class="tabs">
+        <button class="tab active" data-target="processing">Processamento de Imagens</button>
+        <button class="tab" data-target="recognition">Reconhecimento de Padrões</button>
+    </div>
+    
+    <!-- Seção de Processamento de Imagens -->
+    <div id="processing" class="section active">
+        <h2>Como funciona o processamento de imagens</h2>
+        <p>Este módulo demonstra diferentes técnicas de manipulação de imagens digitais, como escala de cinza, desfoque, inversão e detecção de bordas.</p>
+        
+        <div class="image-processing">
+            <!-- Container para exibição das imagens (original e processada) -->
+            <div class="image-display">
+                <div class="canvas-container">
+                    <h3>Imagem Original</h3>
+                    <!-- Imagem oculta usada como referência (seria substituída em um sistema real) -->
+                    <img id="sourceImage" src="/api/placeholder/320/240" alt="Imagem Original" style="display: none;">
+                    <!-- Canvas para desenhar a imagem original -->
+                    <canvas id="originalImage" width="320" height="240"></canvas>
+                </div>
+                <div class="canvas-container">
+                    <h3>Imagem Processada</h3>
+                    <!-- Canvas para mostrar o resultado do processamento -->
+                    <canvas id="processedImage" width="320" height="240"></canvas>
+                </div>
+            </div>
+            
+            <!-- Botões de controle para aplicar diferentes efeitos -->
+            <div class="controls">
+                <button id="grayscaleBtn">Escala de Cinza</button>
+                <button id="blurBtn">Desfoque</button>
+                <button id="thresholdBtn">Limiarização</button>
+                <button id="edgeBtn">Detecção de Bordas</button>
+                <button id="invertBtn">Inverter Cores</button>
+                <button id="resetBtn">Resetar</button>
+            </div>
+            
+            <!-- Caixa de explicação dinâmica que muda conforme o efeito selecionado -->
+            <div class="explanation" id="processingExplanation">
+                <h3>Como funciona:</h3>
+                <p>Selecione um dos efeitos acima para ver como os pixels são transformados.</p>
+            </div>
+            
+            <!-- Diagrama explicativo do fluxo de processamento de imagem -->
+            <div class="flow-diagram">
+                <h3>Fluxo de Processamento de Imagem</h3>
+                
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <div class="step-description">
+                        <strong>Carregamento da Imagem Original</strong>
+                        <p>A imagem é carregada no canvas e convertida em um array de pixels (RGBA). Cada pixel é representado por 4 valores: Red (0-255), Green (0-255), Blue (0-255) e Alpha (transparência, 0-255).</p>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <div class="step-description">
+                        <strong>Aplicação do Algoritmo</strong>
+                        <p>O algoritmo selecionado é aplicado pixel a pixel, transformando seus valores de acordo com regras específicas. Por exemplo, a escala de cinza calcula uma média ponderada dos canais RGB, enquanto o detector de bordas compara pixels vizinhos para identificar mudanças bruscas.</p>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <div class="step-description">
+                        <strong>Atualização do Canvas</strong>
+                        <p>O array de pixels modificado é desenhado de volta no canvas para visualização. Esta etapa usa o método putImageData() do contexto 2D do canvas para atualizar a visualização com os dados processados.</p>
+                    </div>
+                </div>
+                
+                <!-- Legenda para entender os códigos de cor usados -->
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="color-box" style="background-color: var(--accent-primary);"></div>
+                        <span>Escala de Cinza: Média dos canais RGB</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-box" style="background-color: var(--accent-secondary);"></div>
+                        <span>Detecção de Bordas: Algoritmo Sobel</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Seção de Reconhecimento de Padrões -->
+    <div id="recognition" class="section">
+        <h2>Como funciona o reconhecimento de padrões</h2>
+        <p>Este módulo demonstra um método simples de reconhecimento de padrões por comparação de similaridade. Clique nas células para criar padrões, treine um padrão e depois tente reconhecê-lo.</p>
+        
+        <div class="pattern-recognition">
+            <!-- Grade interativa para criar padrões -->
+            <div id="patternGrid"></div>
+            
+            <!-- Controles para o sistema de reconhecimento -->
+            <div class="controls">
+                <button id="trainBtn">Treinar Padrão</button>
+                <button id="recognizeBtn">Reconhecer Padrão</button>
+                <button id="clearPatternBtn">Limpar</button>
+            </div>
+            
+            <!-- Caixa para exibir o resultado da comparação de padrões -->
+            <div class="result-box">
+                <div id="patternResult"></div>
+            </div>
+            
+            <!-- Explicação detalhada do processo -->
+            <div class="explanation">
+                <h3>Como funciona:</h3>
+                <p>1. Clique nas células para criar um padrão visual. Cada célula pode estar em dois estados: ativa (colorida) ou inativa (cinza).</p>
+                <p>2. Clique em "Treinar Padrão" para armazenar o padrão atual como referência. Esse padrão será armazenado internamente como uma matriz binária onde 1 representa células ativas e 0 representa células inativas.</p>
+                <p>3. Crie outro padrão e clique em "Reconhecer Padrão" para comparar com o padrão treinado. O sistema verifica posição por posição, comparando os estados das células.</p>
+                <p>4. O sistema calcula a porcentagem de similaridade entre os padrões, contando quantas células têm o mesmo estado em ambos os padrões e dividindo pelo número total de células.</p>
+                <p>5. Com base no percentual de similaridade, o sistema determina se o padrão foi reconhecido (≥90%), parcialmente reconhecido (≥70%) ou não reconhecido (&lt;70%).</p>
+            </div>
+            
+            <!-- Diagrama explicativo do fluxo de reconhecimento de padrões -->
+            <div class="flow-diagram">
+                <h3>Fluxo de Reconhecimento de Padrões</h3>
+                
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <div class="step-description">
+                        <strong>Criação do Padrão</strong>
+                        <p>O padrão é representado como uma matriz binária (0 ou 1 para cada célula). Isso é uma simplificação do que ocorre em sistemas de reconhecimento de padrões reais, onde os padrões podem ter valores contínuos e múltiplas dimensões.</p>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <div class="step-description">
+                        <strong>Treinamento</strong>
+                        <p>O padrão de referência é armazenado na memória. Em sistemas mais complexos, esta etapa envolveria o ajuste de pesos em redes neurais ou a criação de modelos estatísticos, mas aqui usamos uma abordagem direta de armazenamento do padrão exato.</p>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <div class="step-description">
+                        <strong>Comparação</strong>
+                        <p>O novo padrão é comparado célula a célula com o padrão treinado. Este método de comparação direta é chamado de "template matching" e é uma das técnicas mais básicas de reconhecimento de padrões. Sistemas mais avançados usariam métodos como distância euclidiana, similaridade de cosseno ou outros algoritmos de comparação.</p>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <div class="step-description">
+                        <strong>Resultado</strong>
+                        <p>A similaridade é calculada como a porcentagem de células correspondentes. Quanto maior a similaridade, maior a probabilidade de o padrão ser considerado uma correspondência. Este limiar de decisão (90%/70%) é definido pelo desenvolvedor com base nas necessidades de precisão do sistema.</p>
+                    </div>
+                </div>
+                
+                <!-- Legenda para entender os códigos de cor usados nos resultados -->
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="color-box" style="background-color: var(--success);"></div>
+                        <span>Alta Similaridade (≥90%): Padrão reconhecido com confiança</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-box" style="background-color: var(--warning);"></div>
+                        <span>Similaridade Parcial (≥70%): Possível correspondência, mas com diferenças significativas</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-box" style="background-color: var(--danger);"></div>
+                        <span>Baixa Similaridade (&lt;70%): Padrão não reconhecido, diferenças muito grandes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /******************************************
+         * SISTEMA DE NAVEGAÇÃO POR ABAS
+         ******************************************/
+        
+        // Obtém todos os botões de abas e adiciona event listeners
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.target; // Obtém o ID da seção alvo
+                
+                // Desativa todas as abas e seções
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                
+                // Ativa a aba e seção selecionada
+                tab.classList.add('active');
+                document.getElementById(target).classList.add('active');
+            });
+        });
+        
+        
+        /******************************************
+         * MÓDULO DE PROCESSAMENTO DE IMAGEM
+         ******************************************/
+        
+        // Obtém referências aos elementos de canvas
+        const originalCanvas = document.getElementById('originalImage');
+        const originalCtx = originalCanvas.getContext('2d'); // Contexto para desenhar no canvas original
+        const processedCanvas = document.getElementById('processedImage');
+        const processedCtx = processedCanvas.getContext('2d'); // Contexto para desenhar no canvas processado
+        let originalImageData; // Armazena os dados da imagem original
+        
+        /**
+         * Função para criar uma imagem de demonstração
+         * Em um sistema real, isso seria substituído pelo carregamento de uma imagem do usuário
+         * @param {CanvasRenderingContext2D} ctx - O contexto do canvas onde desenhar
+         * @param {number} width - Largura do canvas
+         * @param {number} height - Altura do canvas
+         * @returns {ImageData} Os dados da imagem criada
+         */
+        function createDemoImage(ctx, width, height) {
+            // Cria um gradiente de fundo do canto superior esquerdo para o canto inferior direito
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#2563eb'); // Azul no início
+            gradient.addColorStop(1, '#8b5cf6'); // Roxo no fim
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height); // Preenche todo o canvas com o gradiente
+            
+            // Desenha um círculo branco no centro
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; // Branco com transparência
+            ctx.beginPath();
+            ctx.arc(width/2, height/2, 50, 0, Math.PI*2); // Círculo no centro
+            ctx.fill();
+            
+            // Desenha um quadrado preto no canto superior esquerdo
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Preto com transparência
+            ctx.fillRect(width/4, height/4, 60, 60);
+            
+            // Desenha um triângulo amarelo no canto superior direito
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.7)'; // Amarelo com transparência
+            ctx.beginPath();
+            ctx.moveTo(3*width/4, height/4); // Ponto inicial
+            ctx.lineTo(3*width/4 + 50, height/4); // Ponto à direita
+            ctx.lineTo(3*width/4 + 25, height/4 - 40); // Ponto superior
+            ctx.closePath();
+            ctx.fill();
+            
+            // Retorna os dados da imagem para processamento
+            return ctx.getImageData(0, 0, width, height);
+        }
+        
+        /**
+         * Inicializa as imagens de demonstração nos canvases
+         */
+        function initializeImages() {
+            // Cria a imagem de demonstração e armazena seus dados
+            originalImageData = createDemoImage(originalCtx, originalCanvas.width, originalCanvas.height);
+            // Copia a imagem original para o canvas de processamento
+            processedCtx.putImageData(originalImageData, 0, 0);
+        }
+        
+        /**
+         * Função para resetar a imagem processada para o estado original
+         */
+        function resetImage() {
+            processedCtx.putImageData(originalImageData, 0, 0);
+            updateExplanation('Imagem resetada para o estado original. Todos os efeitos foram removidos e os pixels voltaram aos valores originais.');
+        }
+        
+        /**
+         * Função para atualizar o texto de explicação de acordo com o efeito selecionado
+         * @param {string} text - Texto explicativo para o efeito atual
+         */
+        function updateExplanation(text) {
+            document.getElementById('processingExplanation').innerHTML = `
+                <h3>Como funciona:</h3>
+                <p>${text}</p>
+            `;
+        }
+        
+        /**
+         * Função para converter a imagem para escala de cinza
+         * A escala de cinza representa a luminosidade de uma imagem,
+         * onde cada pixel tem o mesmo valor para R, G e B
+         */
+        function applyGrayscale() {
+            // Obtém os dados atuais da imagem do canvas de processamento
+            const imageData = processedCtx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data; // Array com todos os valores RGBA (formato: [R,G,B,A,R,G,B,A,...])
+            
+            // Percorre todos os pixels (de 4 em 4 valores, pois cada pixel tem 4 componentes: R, G, B, A)
+            for (let i = 0; i < data.length; i += 4) {
+                // Aplica a fórmula de luminância ponderada que melhor representa a percepção humana
+                // Esta fórmula dá mais peso ao verde porque o olho humano é mais sensível a este canal
+                const avg = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                
+                // Atribui o mesmo valor calculado para os três canais de cor
+                data[i] = avg;     // Canal R
+                data[i + 1] = avg; // Canal G
+                data[i + 2] = avg; // Canal B
+                // O canal Alpha (transparência) não é modificado
+            }
+            
+            // Atualiza a imagem no canvas com os novos dados
+            processedCtx.putImageData(imageData, 0, 0);
+            
+            // Atualiza a explicação
+            updateExplanation('Escala de Cinza: Cada pixel é convertido em um tom de cinza calculando uma média ponderada dos canais RGB (0.299R + 0.587G + 0.114B) para melhor representar como o olho humano percebe luminosidade. Esta fórmula dá mais peso ao canal verde porque nossos olhos são mais sensíveis a esta cor.');
+        }
+        
+        /**
+         * Função para aplicar desfoque à imagem
+         * O desfoque suaviza a imagem, misturando as cores de pixels vizinhos
+         */
+        function applyBlur() {
+            // Obtém os dados atuais da imagem
+            const imageData = processedCtx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data;
+            // Cria uma cópia dos dados para não afetar os cálculos durante o processamento
+            const tempData = new Uint8ClampedArray(data);
+            const width = processedCanvas.width;
+            const height = processedCanvas.height;
+            
+            // Define o raio do desfoque (quanto maior, mais intenso o efeito)
+            const blurRadius = 2;
+            
+            // Percorre todos os pixels (exceto bordas para simplificar)
+            for (let y = blurRadius; y < height - blurRadius; y++) {
+                for (let x = blurRadius; x < width - blurRadius; x++) {
+                    let r = 0, g = 0, b = 0;
+                    let count = 0;
+                    
+                    // Percorre a vizinhança do pixel atual (janela de tamanho 2*blurRadius + 1)
+                    for (let ky = -blurRadius; ky <= blurRadius; ky++) {
+                        for (let kx = -blurRadius; kx <= blurRadius; kx++) {
+                            // Calcula o índice do pixel vizinho no array unidimensional
+                            const idx = ((y + ky) * width + (x + kx)) * 4;
+                            
+                            // Soma os valores dos canais RGB
+                            r += tempData[idx];     // Canal R
+                            g += tempData[idx + 1]; // Canal G
+                            b += tempData[idx + 2]; // Canal B
+                            count++;                // Contador para calcular a média
+                        }
+                    }
+                    
+                    // Calcula a média dos valores dos canais RGB na vizinhança
+                    const idx = (y * width + x) * 4;
+                    data[idx] = r / count;     // Canal R
+                    data[idx + 1] = g / count; // Canal G
+                    data[idx + 2] = b / count; // Canal B
+                    // O canal Alpha não é modificado
+                }
+            }
+            
+            // Atualiza a imagem no canvas com os dados processados
+            processedCtx.putImageData(imageData, 0, 0);
+            
+            // Atualiza a explicação
+            updateExplanation('Desfoque: Este efeito suaviza a imagem calculando a média dos valores de cor de cada pixel com seus vizinhos em um raio de ' + blurRadius + ' pixels. Quanto maior o raio, mais intenso é o efeito de desfoque. Esse tipo de filtro é útil para reduzir ruídos em imagens ou criar efeitos estéticos.');
+        }
+        
+        /**
+         * Função para aplicar limiarização (thresholding) à imagem
+         * Converte a imagem em preto e branco puro baseado em um valor limite
+         */
+        function applyThreshold() {
+            // Obtém os dados atuais da imagem
+            const imageData = processedCtx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data;
+            
+            // Define o valor limite para determinar se um pixel será preto ou branco
+            const threshold = 128; // Valor médio (0-255)
+            
+            // Percorre todos os pixels
+            for (let i = 0; i < data.length; i += 4) {
+                // Calcula a média dos canais RGB para obter a luminosidade
+                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                
+                // Aplica a limiarização: valores abaixo do limite viram preto (0)
+                // e valores acima do limite viram branco (255)
+                const val = avg < threshold ? 0 : 255;
+                
+                // Atribui o valor calculado para os três canais de cor
+                data[i] = val;     // Canal R
+                data[i + 1] = val; // Canal G
+                data[i + 2] = val; // Canal B
+                // O canal Alpha não é modificado
+            }
+            
+            // Atualiza a imagem no canvas com os dados processados
+            processedCtx.putImageData(imageData, 0, 0);
+            
+            // Atualiza a explicação
+            updateExplanation('Limiarização: Cada pixel é convertido para preto ou branco com base em sua luminosidade. Pixels com valor médio abaixo de ' + threshold + ' tornam-se pretos e acima desse valor tornam-se brancos. Esse processo é fundamental em visão computacional para segmentação de imagens, destacando objetos de interesse do fundo.');
+        }
+        
+        /**
+         * Função para aplicar detecção de bordas à imagem usando operador Sobel
+         * Este algoritmo identifica regiões de alta variação de intensidade (bordas)
+         */
+        function applyEdgeDetection() {
+            // Primeiro, converte para escala de cinza para simplificar
+            applyGrayscale();
+            
+            // Obtém os dados atuais da imagem em escala de cinza
+            const imageData = processedCtx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data;
+            // Cria uma cópia dos dados para não afetar os cálculos durante o processamento
+            const tempData = new Uint8ClampedArray(data);
+            const width = processedCanvas.width;
+            const height = processedCanvas.height;
+            
+            // Percorre todos os pixels (exceto bordas)
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    // Operador Sobel para detecção de bordas
+                    // Kernels para detecção de bordas horizontais e verticais
+                    
+                    // Posições dos 9 pixels na vizinhança 3x3 centrada no pixel atual
+                    const idx0 = ((y-1) * width + (x-1)) * 4; // Topo-esquerda
+                    const idx1 = ((y-1) * width + x) * 4;     // Topo-centro
+                    const idx2 = ((y-1) * width + (x+1)) * 4; // Topo-direita
+                    const idx3 = (y * width + (x-1)) * 4;     // Meio-esquerda
+                    //const idx4 = (y * width + x) * 4;       // Meio-centro (pixel atual)
+                    const idx5 = (y * width + (x+1)) * 4;     // Meio-direita
+                    const idx6 = ((y+1) * width + (x-1)) * 4; // Base-esquerda
+                    const idx7 = ((y+1) * width + x) * 4;     // Base-centro
+                    const idx8 = ((y+1) * width + (x+1)) * 4; // Base-direita
+                    
+                    // Calcula gradientes nos eixos X e Y usando o operador Sobel
+                    // Kernel para gradiente X:
+                    // [-1 0 1]
+                    // [-2 0 2]
+                    // [-1 0 1]
+                    const gx = -tempData[idx0] + tempData[idx2] 
+                             - 2*tempData[idx3] + 2*tempData[idx5] 
+                             - tempData[idx6] + tempData[idx8];
+                    
+                    // Kernel para gradiente Y:
+                    // [-1 -2 -1]
+                    // [ 0  0  0]
+                    // [ 1  2  1]
+                    const gy = -tempData[idx0] - 2*tempData[idx1] - tempData[idx2]
+                             + tempData[idx6] + 2*tempData[idx7] + tempData[idx8];
+                    
+                    // Calcula a magnitude do gradiente (intensidade da borda)
+                    // Raiz quadrada da soma dos quadrados dos gradientes
+                    const mag = Math.sqrt(gx*gx + gy*gy);
+                    
+                    // Normaliza para o intervalo 0-255 e ajusta o contraste
+                    const normalized = Math.min(255, mag * 0.8);
+                    
+                    // Calcula o índice do pixel atual
+                    const idx = (y * width + x) * 4;
+                    
+                    // Atribui o valor calculado para os três canais de cor
+                    data[idx] = normalized;     // Canal R
+                    data[idx + 1] = normalized; // Canal G
+                    data[idx + 2] = normalized; // Canal B
+                    // O canal Alpha não é modificado
+                }
+            }
+            
+            // Atualiza a imagem no canvas com os dados processados
+            processedCtx.putImageData(imageData, 0, 0);
+            
+            // Atualiza a explicação
+            updateExplanation('Detecção de Bordas: Este algoritmo identifica bordas calculando o gradiente da imagem em cada ponto usando o operador Sobel. Áreas com grandes variações de intensidade (bordas) aparecem como linhas brancas. O algoritmo aplica duas máscaras 3x3 para calcular as variações horizontais e verticais, combinando-as para encontrar a magnitude total do gradiente em cada pixel.');
+        }
+        
+        /**
+         * Função para inverter as cores da imagem
+         * Cada canal de cor é invertido subtraindo o valor atual de 255
+         */
+        function applyInvert() {
+            // Obtém os dados atuais da imagem
+            const imageData = processedCtx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data;
+            
+            // Percorre todos os pixels
+            for (let i = 0; i < data.length; i += 4) {
+                // Inverte cada canal de cor (255 - valor)
+                data[i] = 255 - data[i];         // Canal R
+                data[i + 1] = 255 - data[i + 1]; // Canal G
+                data[i + 2] = 255 - data[i + 2]; // Canal B
+                // O canal Alpha não é modificado
+            }
+            
+            // Atualiza a imagem no canvas com os dados processados
+            processedCtx.putImageData(imageData, 0, 0);
+            
+            // Atualiza a explicação
+            updateExplanation('Inversão de Cores: Cada pixel tem seus valores RGB invertidos, subtraindo o valor original de 255. Isso cria o efeito de "negativo" onde preto vira branco, branco vira preto e cada cor vira sua cor complementar. Por exemplo, vermelho (255,0,0) vira ciano (0,255,255).');
+        }
+        
+        // Adiciona event listeners aos botões
+        document.getElementById('grayscaleBtn').addEventListener('click', applyGrayscale);
+        document.getElementById('blurBtn').addEventListener('click', applyBlur);
+        document.getElementById('thresholdBtn').addEventListener('click', applyThreshold);
+        document.getElementById('edgeBtn').addEventListener('click', applyEdgeDetection);
+        document.getElementById('invertBtn').addEventListener('click', applyInvert);
+        document.getElementById('resetBtn').addEventListener('click', resetImage);
+        
+        
+        /******************************************
+         * MÓDULO DE RECONHECIMENTO DE PADRÕES
+         ******************************************/
+        
+        // Tamanho da grade de padrões
+        const GRID_SIZE = 5;
+        let patternGrid = []; // Array para armazenar o estado atual do padrão
+        let trainedPattern = null; // Armazena o padrão de referência treinado
+        
+        /**
+         * Inicializa a grade de padrões
+         */
+        function initializePatternGrid() {
+            const gridContainer = document.getElementById('patternGrid');
+            
+            // Limpa qualquer conteúdo existente
+            gridContainer.innerHTML = '';
+            
+            // Cria uma matriz 5x5 para representar o padrão
+            patternGrid = new Array(GRID_SIZE).fill(0).map(() => new Array(GRID_SIZE).fill(0));
+            
+            // Cria as células da grade
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'pattern-cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    
+                    // Adiciona event listener para alternar o estado da célula ao clicar
+                    cell.addEventListener('click', togglePatternCell);
+                    
+                    // Adiciona a célula ao grid
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+        
+        /**
+         * Alterna o estado de uma célula da grade (ativo/inativo)
+         * @param {Event} e - O evento de clique
+         */
+        function togglePatternCell(e) {
+            const cell = e.target;
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            // Alterna o estado no array
+            patternGrid[row][col] = patternGrid[row][col] ? 0 : 1;
+            
+            // Atualiza a visualização
+            cell.classList.toggle('pattern-active');
+        }
+        
+        /**
+         * Treina o sistema com o padrão atual
+         */
+        function trainPattern() {
+            // Copia o padrão atual para o padrão treinado
+            trainedPattern = patternGrid.map(row => [...row]);
+            
+            // Atualiza o resultado
+            document.getElementById('patternResult').innerText = 'Padrão treinado! Agora crie outro padrão e tente reconhecê-lo.';
+            document.getElementById('patternResult').style.color = 'var(--accent-primary)';
+        }
+        
+        /**
+         * Limpa a grade de padrões
+         */
+        function clearPattern() {
+            // Limpa o array do padrão
+            patternGrid = new Array(GRID_SIZE).fill(0).map(() => new Array(GRID_SIZE).fill(0));
+            
+            // Atualiza a visualização
+            document.querySelectorAll('.pattern-cell').forEach(cell => {
+                cell.classList.remove('pattern-active');
+            });
+            
+            // Limpa o resultado
+            document.getElementById('patternResult').innerText = '';
+        }
+        
+        /**
+         * Tenta reconhecer o padrão atual comparando com o padrão treinado
+         */
+        function recognizePattern() {
+            if (!trainedPattern) {
+                document.getElementById('patternResult').innerText = 'Erro: Primeiro treine um padrão!';
+                document.getElementById('patternResult').style.color = 'var(--danger)';
+                return;
+            }
+            
+            let matchCount = 0;
+            const totalCells = GRID_SIZE * GRID_SIZE;
+            
+            // Compara cada célula entre os padrões
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (patternGrid[i][j] === trainedPattern[i][j]) {
+                        matchCount++;
+                    }
+                }
+            }
+            
+            // Calcula a porcentagem de similaridade
+            const similarity = (matchCount / totalCells) * 100;
+            
+            // Atualiza o resultado baseado na similaridade
+            let resultText = '';
+            let resultColor = '';
+            
+            if (similarity >= 90) {
+                resultText = `Padrão reconhecido! Similaridade: ${similarity.toFixed(1)}%`;
+                resultColor = 'var(--success)';
+            } else if (similarity >= 70) {
+                resultText = `Possível correspondência. Similaridade: ${similarity.toFixed(1)}%`;
+                resultColor = 'var(--warning)';
+            } else {
+                resultText = `Padrão não reconhecido. Similaridade: ${similarity.toFixed(1)}%`;
+                resultColor = 'var(--danger)';
+            }
+            
+            document.getElementById('patternResult').innerText = resultText;
+            document.getElementById('patternResult').style.color = resultColor;
+        }
+        
+        // Adiciona event listeners aos botões
+        document.getElementById('trainBtn').addEventListener('click', trainPattern);
+        document.getElementById('recognizeBtn').addEventListener('click', recognizePattern);
+        document.getElementById('clearPatternBtn').addEventListener('click', clearPattern);
+        
+        
+        // Inicializa tudo quando a página carrega
+        window.addEventListener('load', () => {
+            initializeImages();
+            initializePatternGrid();
+        });
+    </script>
+</body>
+</html>
